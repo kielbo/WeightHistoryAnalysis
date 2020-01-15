@@ -1,5 +1,6 @@
 import sqlite3
 from tkinter import *
+from tkinter import messagebox
 from datetime import date
 import matplotlib
 matplotlib.use("TkAgg")
@@ -35,9 +36,9 @@ class Grubas:
         b1.grid(row=3,column=5)
         b2=Button(window,text="New Entry",width=12,command=self.command_entry)
         b2.grid(row=4,column=5)
-        b3=Button(window,text="Update",width=12,command="")
+        b3=Button(window,text="Update",width=12,command=self.command_update)
         b3.grid(row=5,column=5)
-        b4=Button(window,text="Delete entry",width=12,command=window.destroy)#Usuwanie zaznaczonej pozycjii
+        b4=Button(window,text="Delete entry",width=12,command=self.command_destroy)#Usuwanie zaznaczonej pozycjii
         b4.grid(row=6,column=5)
         b5=Button(window,text="Close",width=12,command=window.destroy)#zamykanie programu funkcja window.destroy()
         b5.grid(row=7,column=5)
@@ -55,6 +56,7 @@ class Grubas:
 
         self.list1=Listbox(window,height=15,width=20)
         self.list1.grid(row=3,column=3,rowspan=4)
+        self.list1.bind("<<ListboxSelect>>",self.get_selected_row) #opisac w komenciku
 
         sb1=Scrollbar(window)
         sb1.grid(row=3,column=4,rowspan=6)
@@ -68,7 +70,7 @@ class Grubas:
         self.canvas.get_tk_widget().grid(row=3, column=1,rowspan=4)
     #----------------------------------------------------------------------------
     def command_entry(self):
-        database.insert(self.weight_var.get())# TU SKONCZYŁEŚ !!! zmiena argumenty aby data zaciagala sie z pole e2. :)
+        database.insert(self.weight_var.get(),self.date.get())
         self.list1.delete(0,END)
         self.list1.insert(END,self.weight_var.get())
 
@@ -76,6 +78,32 @@ class Grubas:
         self.list1.delete(0,END)
         for rows in database.view():
             self.list1.insert(END,rows)
+
+    def get_selected_row(self,event):
+        """tworzy zmienna globalna z danymi z zaznaczonego rekordu, dodatkowo uzupelnia pola o dane z zaznaczonego rekordu. Funkcja ma byc wykorzystana do funkcji odpowiadającej za przycisk update"""
+        global selected_tuple #Deklaracja zmiennej globalnej
+        index=self.list1.curselection()[0] # curse selection zwraca nr indexu pozycji na ktora klikna urzytkownik, 
+        selected_tuple= self.list1.get(index) #wyciaga zawartość kliknietego wiersza do zmiennej
+        #print(selected_tuple)
+        #print(self.list1.curselection())
+        #dalej wypelniamy pola danymi z kliknietych wierszy
+        self.e1.delete(0,END)
+        self.e1.insert(END,selected_tuple[2])
+        self.e2.delete(0,END)
+        self.e2.insert(END,selected_tuple[1])
+    
+    def command_update(self):
+        database.update(selected_tuple[0],self.weight_var.get(),self.date.get())
+        messagebox.showinfo("Update","Entry number %s has been updated" % selected_tuple[0])
+        self.command_view_all()
+
+    def command_destroy(self):
+        confirm = messagebox.askyesno("Confirmation ", "Are you sure that you want to delete selected entry ? ", icon='warning')
+        #print(confirm)
+        if confirm==True:
+           database.delete(selected_tuple[0])
+           self.command_view_all()
+
 
 
 window=Tk()

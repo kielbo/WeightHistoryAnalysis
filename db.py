@@ -17,11 +17,10 @@ class Database:
         self.cur = self.conn.cursor()
         self.cur.execute("CREATE TABLE IF NOT EXISTS fat (id INTEGER PRIMARY KEY,day DATE,weight INTEGER )")
         self.conn.commit()
-        self.today = date.today()
 
-    def insert(self,weight):
+    def insert(self,weight,today=date.today()):
         """nowy wpis w bazie danych"""
-        self.cur.execute("INSERT INTO fat VALUES (NULL,?,?)",(self.today,weight))
+        self.cur.execute("INSERT INTO fat VALUES (NULL,?,?)",(today,weight))
         self.conn.commit()
 
     def view(self):
