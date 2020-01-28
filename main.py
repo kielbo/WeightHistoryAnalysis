@@ -2,6 +2,7 @@ import sqlite3
 from tkinter import *
 from tkinter import messagebox
 from datetime import date
+import datetime
 import matplotlib
 matplotlib.use("TkAgg")
 from db import Database
@@ -44,10 +45,12 @@ class Grubas:
         b5.grid(row=7,column=5)
         ################################POLA#########################################
 
+        #Niezbędna walidacja danych !!!
+        # dla wagi jest
         self.weight_var=IntVar()
         self.e1=Entry(window,textvariable=self.weight_var)
         self.e1.grid(row=1,column=1)
-        
+        #niezbedan walidacja danych dla daty
         self.date=StringVar() 
         self.date.set(today)
         self.e2=Entry(window,textvariable=self.date)
@@ -69,7 +72,13 @@ class Grubas:
         self.canvas = FigureCanvasTkAgg(self.figure, window)#ta komenda dopiero tworzy wykres 
         self.canvas.get_tk_widget().grid(row=3, column=1,rowspan=4)
     #----------------------------------------------------------------------------
+    def date_valdation(self,date_text):
+        try:
+            datetime.datetime.strptime(date_text, '%Y-%m-%d')
+        except ValueError:
+            raise ValueError ("Incorrect date format , excepted: YYYY-MM-DD")
     def command_entry(self):
+        self.date_valdation(self.date.get())
         database.insert(self.weight_var.get(),self.date.get())
         self.list1.delete(0,END)
         self.list1.insert(END,self.weight_var.get())
@@ -82,15 +91,18 @@ class Grubas:
     def get_selected_row(self,event):
         """tworzy zmienna globalna z danymi z zaznaczonego rekordu, dodatkowo uzupelnia pola o dane z zaznaczonego rekordu. Funkcja ma byc wykorzystana do funkcji odpowiadającej za przycisk update"""
         global selected_tuple #Deklaracja zmiennej globalnej
-        index=self.list1.curselection()[0] # curse selection zwraca nr indexu pozycji na ktora klikna urzytkownik, 
-        selected_tuple= self.list1.get(index) #wyciaga zawartość kliknietego wiersza do zmiennej
-        #print(selected_tuple)
-        #print(self.list1.curselection())
-        #dalej wypelniamy pola danymi z kliknietych wierszy
-        self.e1.delete(0,END)
-        self.e1.insert(END,selected_tuple[2])
-        self.e2.delete(0,END)
-        self.e2.insert(END,selected_tuple[1])
+        try:
+            index=self.list1.curselection()[0] # curse selection zwraca nr indexu pozycji na ktora klikna urzytkownik, 
+            selected_tuple= self.list1.get(index) #wyciaga zawartość kliknietego wiersza do zmiennej
+            #print(selected_tuple)
+            #print(self.list1.curselection())
+            #dalej wypelniamy pola danymi z kliknietych wierszy
+            self.e1.delete(0,END)
+            self.e1.insert(END,selected_tuple[2])# to moze generowac bład przy kliknieciu na nowy wpis ktory nie ma indekus nr2.
+            self.e2.delete(0,END)
+            self.e2.insert(END,selected_tuple[1])
+        except (IndexError, TypeError):
+            pass
     
     def command_update(self):
         database.update(selected_tuple[0],self.weight_var.get(),self.date.get())
